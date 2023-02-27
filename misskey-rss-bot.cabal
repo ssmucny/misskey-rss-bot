@@ -1,0 +1,124 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           misskey-rss-bot
+version:        0.0.1.0
+description:    Please see the README on Github at <https://github.com/githubuser/misskey-rss-bot#readme>
+homepage:       https://github.com/githubuser/misskey-rss-bot#readme
+bug-reports:    https://github.com/githubuser/misskey-rss-bot/issues
+author:         Sam Smucny
+copyright:      2023 Sam Smucny
+license:        GPL3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/misskey-rss-bot
+
+library
+  exposed-modules:
+      Import
+      RSS
+      Run
+      Types
+      Util
+  other-modules:
+      Paths_misskey_rss_bot
+  hs-source-dirs:
+      src
+  default-extensions:
+      NoImplicitPrelude
+      OverloadedStrings
+      DuplicateRecordFields
+      OverloadedRecordDot
+      BangPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      aeson
+    , async
+    , base >=4.11 && <10
+    , bytestring
+    , containers
+    , feed
+    , http-client
+    , http-client-tls
+    , http-conduit
+    , http-types
+    , rio >=0.1.12.0
+    , text
+    , time
+    , yaml
+  default-language: Haskell2010
+
+executable misskey-rss-bot-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_misskey_rss_bot
+  hs-source-dirs:
+      app
+  default-extensions:
+      NoImplicitPrelude
+      OverloadedStrings
+      DuplicateRecordFields
+      OverloadedRecordDot
+      BangPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , async
+    , base >=4.11 && <10
+    , bytestring
+    , containers
+    , feed
+    , http-client
+    , http-client-tls
+    , http-conduit
+    , http-types
+    , misskey-rss-bot
+    , optparse-simple
+    , rio >=0.1.12.0
+    , text
+    , time
+    , yaml
+  default-language: Haskell2010
+
+test-suite misskey-rss-bot-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      UtilSpec
+      Paths_misskey_rss_bot
+  hs-source-dirs:
+      test
+  default-extensions:
+      NoImplicitPrelude
+      OverloadedStrings
+      DuplicateRecordFields
+      OverloadedRecordDot
+      BangPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , async
+    , base >=4.11 && <10
+    , bytestring
+    , containers
+    , feed
+    , hspec
+    , http-client
+    , http-client-tls
+    , http-conduit
+    , http-types
+    , misskey-rss-bot
+    , rio >=0.1.12.0
+    , text
+    , time
+    , yaml
+  default-language: Haskell2010
