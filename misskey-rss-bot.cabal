@@ -93,6 +93,7 @@ test-suite misskey-rss-bot-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      RSSSpec
       UtilSpec
       Paths_misskey_rss_bot
   hs-source-dirs:

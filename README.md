@@ -41,7 +41,7 @@ Run ghcup tui to install different versions of Haskell tools
 
 # Dependencies
 ```bash
-sudo dnf install -y gcc gcc-c++ gmp gmp-devel make ncurses ncurses-compat-libs xz perl ncurses-devel ncurses-devel zlib-devel
+sudo dnf install -y gcc gcc-c++ gmp gmp-devel make ncurses ncurses-compat-libs xz perl ncurses-devel ncurses-devel zlib-devel # Fedora packages required for GHCup/Stack
 
 curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
 ```
