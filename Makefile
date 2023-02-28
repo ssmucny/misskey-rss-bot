@@ -4,11 +4,15 @@ build-only:
 build:
 	stack build --pedantic --test
 
+test:
+	stack test
+
 run: build
 	stack exec -- misskey-rss-bot-exe
 
 dev-watch:
 	stack build --fast --test --file-watch
+
 
 docker-build:
 	podman-host build -t misskey-rss-bot .
@@ -18,3 +22,7 @@ docker-run:
 
 format:
 	stack exec -- stylish-haskell -i src/** app/** test/**
+
+# build documentation (output in .stack-work/dist/x86_64-linux/Cabal-3.6.3.0/doc)
+docs:
+	stack haddock
