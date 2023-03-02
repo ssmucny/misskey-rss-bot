@@ -1,12 +1,12 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.0.
+-- This file has been generated from package.yaml by hpack version 0.35.1.
 --
 -- see: https://github.com/sol/hpack
 
 name:           misskey-rss-bot
 version:        0.0.1.0
-description:    Please see the README on Github at <https://github.com/githubuser/misskey-rss-bot#readme>
+description:    Please see the README on Github at <https://github.com/ssmucny/misskey-rss-bot#readme>
 homepage:       https://github.com/githubuser/misskey-rss-bot#readme
 bug-reports:    https://github.com/githubuser/misskey-rss-bot/issues
 author:         Sam Smucny
@@ -25,6 +25,7 @@ source-repository head
 library
   exposed-modules:
       Import
+      Misskey
       RSS
       Run
       Types

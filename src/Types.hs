@@ -5,6 +5,9 @@ module Types
   , Options (..)
   , AppConfig (..)
   , Url(..)
+  , TagPair(..)
+  , Post(..)
+  , FeedConfig(..)
   ) where
 
 import           Data.Time.Calendar.OrdinalDate
@@ -34,12 +37,12 @@ instance HasProcessContext App where
 
 data AppConfig =
   AppConfig {
-    feeds :: [Feed]
+    feeds :: [FeedConfig]
   , tags  :: [TagPair]
   } deriving (Show, Generic, FromJSON, ToJSON)
 
-data Feed =
-    Feed {
+data FeedConfig =
+    FeedConfig {
      instanceUrl          :: Url
     , rssUrl              :: Url
     , userToken           :: MkToken
@@ -85,8 +88,12 @@ data PostParams =
 
 data TagPair =
   TagPair {
-    tag      :: Text
-  , category :: Text
+    category :: Text
+  , tag      :: Text
   } deriving (Show, Generic, FromJSON, ToJSON)
 
 
+data Post =
+  Post {
+
+  }

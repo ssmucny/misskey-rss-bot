@@ -9,7 +9,7 @@ import qualified Paths_misskey_rss_bot
 import           RIO.Process
 import           Run
 
-main :: IO ()
+main :: IO [Void]
 main = do
   (cmdOptions, ()) <- simpleOptions
     $(simpleVersion Paths_misskey_rss_bot.version)

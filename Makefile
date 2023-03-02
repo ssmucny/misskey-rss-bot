@@ -7,8 +7,8 @@ build:
 test:
 	stack test
 
-run: build
-	stack exec -- misskey-rss-bot-exe
+run: 
+	stack exec -- misskey-rss-bot-exe -c config/default.yaml
 
 dev-watch:
 	stack build --fast --test --file-watch

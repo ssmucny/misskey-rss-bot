@@ -31,6 +31,6 @@ getFeed (Url url) = do
     response <- httpLBS =<< parseRequest (unpack url)
     return $ case getResponseStatusCode response of
             200   -> case (parseFeedSource $ getResponseBody response) of
-                Nothing   -> Left $ mkStatus 0 "Unable to parse RSS feed"
+                Nothing   -> Left $ mkStatus 0 "Unable to parse feed"
                 Just feed -> Right feed
             _  -> Left $ getResponseStatus response
