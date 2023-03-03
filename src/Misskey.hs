@@ -4,12 +4,10 @@ module Misskey (
     ) where
 
 import           Data.Aeson
-import           Data.Aeson.Types
 import           Data.Scientific
 import           Data.Text           (pack)
 import           Import
 import           Network.HTTP.Simple
-import           RIO
 
 data NoteFilters =
       Limit Integer -- ^Limit `elem` [1..100]
@@ -21,16 +19,20 @@ data NoteFilters =
     | HasFiles Bool
     | IsPoll Bool
 
+defaultMkRequest :: Request
+defaultMkRequest
+    = setRequestMethod "POST"
+    $ setRequestSecure True
+    $ setRequestPort 443
+    $ defaultRequest
+
 notes :: Url -> (Maybe MkToken) -> [NoteFilters] -> IO (Either MkError [Note])
 notes (Url host) token flags = do
     let request
             = setRequestPath "/api/notes"
             $ setRequestHost (encodeUtf8 host) -- ^misskey.io
-            $ setRequestMethod "POST"
             $ setRequestBodyJSON (object $ userAuthToken token <> map term flags)
-            $ setRequestSecure True
-            $ setRequestPort 443
-            $ defaultRequest
+            $ defaultMkRequest
     mkResponseEither <$> httpJSON request
     where term (Limit n)          = ("limit", Number (scientific n 0))
           term (Since (NoteId i)) = ("sinceId", String i)
@@ -41,6 +43,7 @@ notes (Url host) token flags = do
           term (HasFiles b)       = ("withFiles", Bool b)
           term (IsPoll b)         = ("poll", Bool b)
 
+userAuthToken :: Maybe MkToken -> [(Key, Value)]
 userAuthToken Nothing            = []
 userAuthToken (Just (MkToken t)) = [("i", String t)]
 
