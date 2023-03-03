@@ -9,13 +9,13 @@ import qualified Paths_misskey_rss_bot
 import           RIO.Process
 import           Run
 
-main :: IO [Void]
+main :: IO [()]
 main = do
   (cmdOptions, ()) <- simpleOptions
     $(simpleVersion Paths_misskey_rss_bot.version)
     "Usage of misskey-rss-bot"
     "A bot that collects RSS feeds and posts them to Misskey"
-    (Options
+    (AppOptions
        <$> switch (
           long "verbose"
           <> short 'v'

@@ -1,5 +1,6 @@
 module RSS (
-    getFeed
+getFeed
+, feedType
 ) where
 
 import           Data.Text                 (unpack)
@@ -9,16 +10,6 @@ import           RIO
 import           Text.Feed.Import          (parseFeedSource)
 import           Text.Feed.Types
 import           Types
-
-fetchFeed :: RIO App (Maybe Feed)
-fetchFeed = do
-    response <- httpLBS "http://www.coolcleveland.com/feed"
-    logInfo $ "Status: " <> display (getResponseStatusCode response)
-    logInfo $ foldl' (<>) "Content-Type: " $ map displayBytesUtf8 (getResponseHeader "Content-Type" response)
-    --logInfo $ displayBytesUtf8 $ getResponseBody response
-    let feed = parseFeedSource $ getResponseBody response
-    logInfo $ maybe "Empty" feedType feed
-    pure feed
 
 feedType :: IsString a => Feed -> a
 feedType (AtomFeed _) = "AtomFeed"

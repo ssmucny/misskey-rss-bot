@@ -13,6 +13,8 @@ run:
 dev-watch:
 	stack build --fast --test --file-watch
 
+repl:
+	stack ghci
 
 docker-build:
 	podman-host build -t misskey-rss-bot .

@@ -2,22 +2,27 @@
 {-# LANGUAGE DeriveGeneric  #-}
 module Types
   ( App (..)
-  , Options (..)
+  , AppOptions (..)
   , AppConfig (..)
   , Url(..)
   , TagPair(..)
   , Post(..)
   , FeedConfig(..)
+  , MkToken(..)
+  , Note(..)
+  , NoteId(..)
+  , MkError(..)
   ) where
 
+import           Data.Aeson
 import           Data.Time.Calendar.OrdinalDate
-import           Data.Yaml
+import           Data.Time.Clock
 import           GHC.Generics
 import           RIO
 import           RIO.Process
 
 -- | Command line arguments
-data Options = Options
+data AppOptions = AppOptions
   { verbose    :: !Bool
   , configFile :: !Text
   }
@@ -25,7 +30,7 @@ data Options = Options
 data App = App
   { logFunc        :: !LogFunc
   , processContext :: !ProcessContext
-  , options        :: !Options
+  , options        :: !AppOptions
   , config         :: !AppConfig
   -- Add other app-specific configuration information here
   }
@@ -92,8 +97,76 @@ data TagPair =
   , tag      :: Text
   } deriving (Show, Generic, FromJSON, ToJSON)
 
+data MkError = MkError
+    { code    :: Text
+    , message :: Text
+    , id      :: Text
+    } deriving (Show, Generic, FromJSON, ToJSON)
 
 data Post =
   Post {
 
   }
+
+data Note = Note
+    { id           :: NoteId
+    , createdAt    :: UTCTime
+    , text         :: Maybe Text
+    , cw           :: Maybe Text
+    , userId       :: UserId
+    , mentions     :: Maybe [UserId]
+    , user         :: User
+    , replyId      :: Maybe NoteId
+    , reply        :: Maybe Note
+    , renoteId     :: Maybe NoteId
+    , renote       :: Maybe Note
+    , visibility   :: NoteVisibility
+    , localOnly    :: Bool
+    , renoteCount  :: Int
+    , repliesCount :: Int
+    --, reactions :: ()
+    --, reactionEmojis :: ()
+    --, emojis :: ()
+    , fileIds      :: [FileId]
+    , files        :: [File]
+    , uri          :: Maybe Url
+    , tags         :: Maybe [Text]
+    } deriving (Show, Generic, FromJSON, ToJSON)
+
+data File = File
+ { id           :: FileId
+ , createdAt    :: UTCTime
+ , name         :: Text
+ --, type :: MimeType
+ , md5          :: Md5Sum
+ , size         :: ByteSize
+ , isSensitive  :: Bool
+ , blurhash     :: Text
+ , properties   :: Object
+ , url          :: Url
+ , thumbnailUrl :: Url
+ , comment      :: Maybe Text
+ , folderId     :: Maybe FolderId
+ , userId       :: Maybe UserId
+ , user         :: Maybe User
+ }  deriving (Show, Generic, FromJSON, ToJSON)
+
+data User = User
+  { id       :: UserId
+  , name     :: Text
+  , username :: Text
+  , host     :: Maybe Url
+  --, avatarUrl :: Url
+  --, avatarBlurhash :: Text
+  --, isBot :: Bool
+  --, isCat :: Bool
+  --, instance :: Object
+  --, emojis :: Object
+  } deriving (Show, Generic, FromJSON, ToJSON)
+
+newtype NoteId = NoteId Text deriving (Show, Generic, FromJSON, ToJSON)
+newtype UserId = UserId Text deriving (Show, Generic, FromJSON, ToJSON)
+newtype FileId = FileId Text deriving (Show, Generic, FromJSON, ToJSON)
+newtype Md5Sum = Md5Sum Text deriving (Show, Generic, FromJSON, ToJSON)
+newtype ByteSize = ByteSize Integer deriving (Show, Generic, FromJSON, ToJSON)
+newtype FolderId = FolderId Text deriving (Show, Generic, FromJSON, ToJSON)
