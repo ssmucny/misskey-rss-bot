@@ -6,20 +6,26 @@ module Types
   , AppConfig (..)
   , Url(..)
   , TagPair(..)
-  , Post(..)
   , FeedConfig(..)
   , MkToken(..)
   , Note(..)
   , NoteId(..)
   , MkError(..)
+  , User(..)
+  , UserId(..)
+  , UserDetails(..)
+  , Post(..)
+  , PostParams(..)
+  , emptyError
   ) where
 
 import           Data.Aeson
-import           Data.Time.Calendar.OrdinalDate
 import           Data.Time.Clock
 import           GHC.Generics
 import           RIO
-import           RIO.Process
+import RIO.Process ( HasProcessContext(..), ProcessContext )
+import Data.ByteString.Lazy (unpack)
+import qualified Data.Foldable
 
 -- | Command line arguments
 data AppOptions = AppOptions
@@ -51,15 +57,14 @@ data FeedConfig =
      instanceUrl          :: Url
     , rssUrl              :: Url
     , userToken           :: MkToken
-    , refreshFrequencyMin :: Minutes
-    , dateOverride        :: Maybe Day
+    , refreshFrequencyMin :: Int
+    , dateOverride        :: Maybe UTCTime
     , misskeyParams       :: MisskeyParams
     , postParams          :: PostParams
     }  deriving (Show, Generic, FromJSON, ToJSON)
 
 newtype Url = Url Text deriving (Show, Generic, FromJSON, ToJSON)
 newtype MkToken = MkToken Text deriving (Show, Generic, FromJSON, ToJSON)
-newtype Minutes = Minutes Int deriving (Show, Generic, FromJSON, ToJSON)
 
 data MisskeyParams =
     MisskeyParams {
@@ -102,11 +107,11 @@ data MkError = MkError
     , message :: Text
     , id      :: Text
     } deriving (Show, Generic, FromJSON, ToJSON)
+emptyError :: MkError
+emptyError = MkError "" "" ""
 
-data Post =
-  Post {
-
-  }
+instance Display MkError where
+  display = Data.Foldable.fold . fmap display . unpack . encode
 
 data Note = Note
     { id           :: NoteId
@@ -156,12 +161,15 @@ data User = User
   , name     :: Text
   , username :: Text
   , host     :: Maybe Url
-  --, avatarUrl :: Url
-  --, avatarBlurhash :: Text
-  --, isBot :: Bool
-  --, isCat :: Bool
-  --, instance :: Object
-  --, emojis :: Object
+  } deriving (Show, Generic, FromJSON, ToJSON)
+
+data UserDetails = UserDetails
+  { id       :: UserId
+  , name     :: Text
+  , username :: Text
+  , host     :: Maybe Url
+  , notesCount :: Int
+  , pinnedNoteIds :: [NoteId]
   } deriving (Show, Generic, FromJSON, ToJSON)
 
 newtype NoteId = NoteId Text deriving (Show, Generic, FromJSON, ToJSON)
@@ -170,3 +178,11 @@ newtype FileId = FileId Text deriving (Show, Generic, FromJSON, ToJSON)
 newtype Md5Sum = Md5Sum Text deriving (Show, Generic, FromJSON, ToJSON)
 newtype ByteSize = ByteSize Integer deriving (Show, Generic, FromJSON, ToJSON)
 newtype FolderId = FolderId Text deriving (Show, Generic, FromJSON, ToJSON)
+
+data Post = Post
+  { link :: Url
+  , title :: Text
+  , content :: Text
+  , categories :: [Text]
+  , createdDate :: UTCTime
+  } deriving (Show, Generic)
