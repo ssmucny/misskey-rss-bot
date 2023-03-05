@@ -7,10 +7,10 @@ module Util
   , delaySeconds
   ) where
 
-import           RIO
+import           Data.ByteString as BS (unpack)
 import qualified Data.Foldable
-import Data.ByteString as BS
-import Data.Time
+import           Data.Time       (UTCTime, defaultTimeLocale, parseTimeOrError)
+import           RIO
 
 plus2 :: Int -> Int
 plus2 = (+ 2)
@@ -23,7 +23,7 @@ fallbackTime :: UTCTime
 fallbackTime = understandTime "1970-01-01"
   where timeFormat = "%Y-%m-%d"
         understandTime = parseTimeOrError True defaultTimeLocale timeFormat
- 
+
 delaySeconds :: Int -> IO ()
 delaySeconds sec
   | sec <= thousandSec = threadDelay $ sec * 1000000

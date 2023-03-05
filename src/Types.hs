@@ -20,12 +20,11 @@ module Types
   ) where
 
 import           Data.Aeson
-import           Data.Time.Clock
-import           GHC.Generics
-import           RIO
-import RIO.Process ( HasProcessContext(..), ProcessContext )
-import Data.ByteString.Lazy (unpack)
+import           Data.ByteString.Lazy (unpack)
 import qualified Data.Foldable
+import           Data.Time.Clock      (UTCTime)
+import           RIO
+import           RIO.Process          (HasProcessContext (..), ProcessContext)
 
 -- | Command line arguments
 data AppOptions = AppOptions
@@ -164,11 +163,11 @@ data User = User
   } deriving (Show, Generic, FromJSON, ToJSON)
 
 data UserDetails = UserDetails
-  { id       :: UserId
-  , name     :: Text
-  , username :: Text
-  , host     :: Maybe Url
-  , notesCount :: Int
+  { id            :: UserId
+  , name          :: Text
+  , username      :: Text
+  , host          :: Maybe Url
+  , notesCount    :: Int
   , pinnedNoteIds :: [NoteId]
   } deriving (Show, Generic, FromJSON, ToJSON)
 
@@ -180,9 +179,9 @@ newtype ByteSize = ByteSize Integer deriving (Show, Generic, FromJSON, ToJSON)
 newtype FolderId = FolderId Text deriving (Show, Generic, FromJSON, ToJSON)
 
 data Post = Post
-  { link :: Url
-  , title :: Text
-  , content :: Text
-  , categories :: [Text]
+  { link        :: Url
+  , title       :: Text
+  , content     :: Text
+  , categories  :: [Text]
   , createdDate :: UTCTime
   } deriving (Show, Generic)

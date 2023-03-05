@@ -4,15 +4,16 @@ getFeed
 ) where
 
 import           Data.Text                 (unpack)
+import           Data.Time                 (defaultTimeLocale, parseTimeOrError,
+                                            rfc822DateFormat)
 import           Network.HTTP.Simple
-import Network.HTTP.Types.Status ( Status, mkStatus )
+import           Network.HTTP.Types.Status (Status, mkStatus)
 import           RIO
 import           Text.Feed.Import          (parseFeedSource)
 import           Text.Feed.Types
+import           Text.RSS.Syntax
 import           Types
-import Text.RSS.Syntax
-import Data.Time (parseTimeOrError, defaultTimeLocale, rfc822DateFormat)
-import Util
+import           Util
 
 feedType :: IsString a => Feed -> a
 feedType (AtomFeed _) = "AtomFeed"

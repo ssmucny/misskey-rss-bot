@@ -6,13 +6,12 @@ module Misskey (
     , NotePredicate(..)
     ) where
 
-import RIO
 import           Data.Aeson
-import           Data.Scientific
-import           Data.Text           (pack, head)
+import           Data.Scientific     (scientific)
+import           Data.Text           (pack)
+import           Data.Time           (UTCTime)
 import           Import
 import           Network.HTTP.Simple
-import Data.Time (UTCTime)
 
 data NotePredicate =
       Limit Integer -- ^Limit `elem` [1..100]
@@ -81,10 +80,10 @@ getLatestPostDate :: MonadIO m =>
 getLatestPostDate host token = do
     me <- getMe host token
     notes <- case me of
-        Left e -> pure $ Left e
+        Left e  -> pure $ Left e
         Right i -> getUserNotes host token i.id [Limit 1]
     return $ createdAt <$> (headEither =<< notes)
-    where headEither [] = Left $ MkError "NO_NOTES_FOR_USER" "" ""
+    where headEither []    = Left $ MkError "NO_NOTES_FOR_USER" "" ""
           headEither (n:_) = Right n
 
 

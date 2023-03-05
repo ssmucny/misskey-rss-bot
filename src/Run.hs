@@ -1,16 +1,15 @@
 module Run (run) where
 
-import qualified Data.Map.Strict as M
-import           Data.Text       (toCaseFold)
-import           Data.Yaml       as Y
+import qualified Data.Map.Strict    as M
+import           Data.Text          (toCaseFold)
+import           Data.Time          (UTCTime)
+import           Data.Yaml          as Y (encode)
 import           Import
-import           Misskey
-import Data.Time ( defaultTimeLocale, UTCTime )
-import Data.Time.Format (parseTimeOrError)
-import RSS (getFeed)
-import Network.HTTP.Types (Status(statusCode, statusMessage))
-import Util
-import RIO.List (sortOn)
+import           Misskey            (getLatestPostDate, postNote)
+import           Network.HTTP.Types (Status (statusCode, statusMessage))
+import           RIO.List           (sortOn)
+import           RSS                (getFeed)
+import           Util
 
 run :: RIO App [()]
 run = do
@@ -18,7 +17,7 @@ run = do
   logDebug "verbose logging enabled..."
   appConfig <- config <$> ask
   let tagMapping = tagMap $ appConfig.tags
-  logInfo $ "---Start YAML Config---" <> displayBytesUtf8 (encode appConfig) <> "---End YAML Config---"
+  logInfo $ "---Start YAML Config---" <> displayBytesUtf8 (Y.encode appConfig) <> "---End YAML Config---"
 
   -- One thread is created for each feed, and it will recursivly update, never returning
   forConcurrently appConfig.feeds $ updatePosts tagMapping []
@@ -30,7 +29,7 @@ tagMap tagPairs = M.fromListWith (<>) $ addHash <$> tagPairs
 addHash :: TagPair -> (Text, Text)
 addHash tagPair = (tagPair.category, " #" <> toCaseFold tagPair.tag)
 
-updatePosts :: (M.Map Text Text) -> [Note] -> FeedConfig -> RIO App ()
+updatePosts :: M.Map Text Text -> [Note] -> FeedConfig -> RIO App ()
 updatePosts tagsMap prevPosts feedConfig = do
   let localLastDate = calcLocalLastDate prevPosts feedConfig.dateOverride
   lastDate <- case localLastDate of
@@ -57,7 +56,7 @@ updatePosts tagsMap prevPosts feedConfig = do
   let noteCache = if null newNotes then prevPosts else newNotes
   liftIO $ delaySeconds (feedConfig.refreshFrequencyMin * 60)
   updatePosts tagsMap noteCache feedConfig
-  
+
 
 filterPosts :: Either MkError UTCTime -> Either Status [Post] -> Either MkError [Post]
 filterPosts lastDate' feed' = do
@@ -69,14 +68,14 @@ filterPosts lastDate' feed' = do
 logLeft :: (MonadIO m, MonadReader env m, HasLogFunc env, Display a) =>
  Either a b -> m ()
 logLeft result = case result of
-  Left e -> logError $ display e
+  Left e  -> logError $ display e
   Right _ -> pure ()
 
 
 logLeftWith :: (MonadIO m, MonadReader env m, HasLogFunc env, Display a) =>
   (t -> a) -> Either t b -> m ()
 logLeftWith format result = case result of
-  Left e -> logError $ display $ format e
+  Left e  -> logError $ display $ format e
   Right _ -> pure ()
 
 calcLocalLastDate :: [Note] -> Maybe UTCTime -> Maybe UTCTime
