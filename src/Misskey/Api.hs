@@ -1,4 +1,4 @@
-module Misskey (
+module Misskey.Api (
     getNotes
     , getMe
     , getLatestPostDate
@@ -6,22 +6,16 @@ module Misskey (
     , NotePredicate(..)
     ) where
 
+import RIO
 import           Data.Aeson
 import           Data.Scientific     (scientific)
 import           Data.Text           (pack)
 import           Data.Time           (UTCTime)
-import           Import
 import           Network.HTTP.Simple
 
-data NotePredicate =
-      Limit Integer -- ^Limit `elem` [1..100]
-    | Since NoteId
-    | Until NoteId
-    | IsLocal Bool
-    | IsReply Bool
-    | IsRenote Bool
-    | HasFiles Bool
-    | IsPoll Bool
+import Misskey.Types
+
+
 
 defaultMkRequest :: Request
 defaultMkRequest
@@ -31,10 +25,10 @@ defaultMkRequest
     $ defaultRequest
 
 getNotes :: (MonadIO m) => Url -> Maybe MkToken -> [NotePredicate] -> m (Either MkError [Note])
-getNotes (Url host) token flags = do
+getNotes (Url hostname) token flags = do
     let request
             = setRequestPath "/api/notes"
-            $ setRequestHost (encodeUtf8 host) -- ^misskey.io
+            $ setRequestHost (encodeUtf8 hostname) -- ^misskey.io
             $ setRequestBodyJSON (object $ userAuthToken token <> map predicateTerm flags)
             $ defaultMkRequest
     mkResponseEither <$> httpJSON request
@@ -65,10 +59,10 @@ mkResponseEither response = case getResponseStatusCode response of
 
 getMe :: (MonadIO m) =>
     Url -> Maybe MkToken -> m (Either MkError UserDetails)
-getMe (Url host) token = do
+getMe (Url hostname) token = do
     let request
             = setRequestPath "/api/i"
-            $ setRequestHost (encodeUtf8 host) -- ^misskey.io
+            $ setRequestHost (encodeUtf8 hostname) -- ^misskey.io
             $ setRequestBodyJSON (object $ userAuthToken token)
             $ defaultMkRequest
     mkResponseEither <$> httpJSON request
@@ -77,25 +71,35 @@ getMe (Url host) token = do
 
 getLatestPostDate :: MonadIO m =>
     Url -> Maybe MkToken -> m (Either MkError UTCTime)
-getLatestPostDate host token = do
-    me <- getMe host token
+getLatestPostDate hostname token = do
+    me <- getMe hostname token
     notes <- case me of
         Left e  -> pure $ Left e
-        Right i -> getUserNotes host token i.id [Limit 1]
-    return $ createdAt <$> (headEither =<< notes)
+        Right i -> getUserNotes hostname token i.id [Limit 1]
+    return $ noteCreatedAt <$> (headEither =<< notes)
     where headEither []    = Left $ MkError "NO_NOTES_FOR_USER" "" ""
           headEither (n:_) = Right n
+          noteCreatedAt :: Note -> UTCTime
+          noteCreatedAt note = note.createdAt
 
 
 getUserNotes :: (MonadIO m) => Url -> Maybe MkToken -> UserId -> [NotePredicate] -> m (Either MkError [Note])
-getUserNotes (Url host) token (UserId uid) flags = do
+getUserNotes (Url hostname) token (UserId uid) flags = do
     let request
             = setRequestPath "/api/users/notes"
-            $ setRequestHost (encodeUtf8 host) -- ^misskey.io
+            $ setRequestHost (encodeUtf8 hostname) -- ^misskey.io
             $ setRequestBodyJSON (object $ userAuthToken token <> [("userId", String uid)] <> map predicateTerm flags)
             $ defaultMkRequest
     mkResponseEither <$> httpJSON request
 
-postNote :: (MonadIO m) => Url -> MkToken -> PostParams -> Map Text Text -> Post -> m (Either MkError Note)
-postNote (Url host) (MkToken token) postOptions tagMap post = undefined
+
+
+postNote :: (MonadIO m) => Url -> Maybe MkToken -> NewNote -> m (Either MkError Note)
+postNote (Url hostname) token note = do
+    let request
+            = setRequestPath "/api/notes/create"
+            $ setRequestHost (encodeUtf8 hostname) -- ^misskey.io
+            $ setRequestBodyJSON (toJSONList [toJSON note, object (userAuthToken token)])
+            $ defaultMkRequest
+    mkResponseEither <$> httpJSON request
 

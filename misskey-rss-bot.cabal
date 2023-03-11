@@ -25,7 +25,9 @@ source-repository head
 library
   exposed-modules:
       Import
-      Misskey
+      Misskey.Api
+      Misskey.Mfm
+      Misskey.Types
       RSS
       Run
       Types

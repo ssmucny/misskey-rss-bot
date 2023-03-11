@@ -1,11 +1,12 @@
 module Run (run) where
 
 import qualified Data.Map.Strict    as M
-import           Data.Text          (toCaseFold)
+import           Data.Text          (strip, toCaseFold, unwords)
 import           Data.Time          (UTCTime)
 import           Data.Yaml          as Y (encode)
 import           Import
-import           Misskey            (getLatestPostDate, postNote)
+import           Misskey.Api        (getLatestPostDate, postNote)
+import           Misskey.Mfm
 import           Network.HTTP.Types (Status (statusCode, statusMessage))
 import           RIO.List           (sortOn)
 import           RSS                (getFeed)
@@ -22,14 +23,15 @@ run = do
   -- One thread is created for each feed, and it will recursivly update, never returning
   forConcurrently appConfig.feeds $ updatePosts tagMapping []
 
-tagMap :: [TagPair] -> M.Map Text Text
+tagMap :: [TagPair] -> HashtagMap
 tagMap tagPairs = M.fromListWith (<>) $ addHash <$> tagPairs
 
+type HashtagMap = M.Map Text Text
 
 addHash :: TagPair -> (Text, Text)
 addHash tagPair = (tagPair.category, " #" <> toCaseFold tagPair.tag)
 
-updatePosts :: M.Map Text Text -> [Note] -> FeedConfig -> RIO App ()
+updatePosts :: HashtagMap -> [Note] -> FeedConfig -> RIO App ()
 updatePosts tagsMap prevPosts feedConfig = do
   let localLastDate = calcLocalLastDate prevPosts feedConfig.dateOverride
   lastDate <- case localLastDate of
@@ -46,7 +48,7 @@ updatePosts tagsMap prevPosts feedConfig = do
 
   -- post new notes to Misskey
   logInfo $ "Posting " <> (display . length $ fromRight [] filteredPosts) <> " new notes to " <> displayShow feedConfig.instanceUrl <> " from " <> displayShow feedConfig.rssUrl
-  noteResponses <- forM (fromRight [] filteredPosts) $ postNote feedConfig.instanceUrl feedConfig.userToken feedConfig.postParams tagsMap
+  noteResponses <- forM (basicFormatter tagsMap <$> fromRight [] filteredPosts) $ postNote feedConfig.instanceUrl (Just feedConfig.userToken)
 
   let (postErrors, newNotes) = partitionEithers noteResponses
   forM_ postErrors $ logError . display
@@ -84,5 +86,31 @@ calcLocalLastDate previousPosts manualDate =
 
 
 getLastDateFromCache :: [Note] -> UTCTime
-getLastDateFromCache = foldr max fallbackTime . fmap createdAt
+getLastDateFromCache = foldr max fallbackTime . fmap noteCreatedAt
+  where
+    noteCreatedAt :: Note -> UTCTime
+    noteCreatedAt note = note.createdAt
+
+
+basicFormatter :: HashtagMap -> Post -> NewNote
+basicFormatter tagmap post = NewNote
+  { text = formatContents tagmap post
+  , visibility = Public
+  , visibleUserIds = []
+  , cw = Nothing
+  , localOnly = True
+  , noExtractMentions = False
+  , noExtractHashtags = False
+  , noExtractEmojis = False
+  , replyId = Nothing
+  , renoteId = Nothing
+  , channelId = Nothing
+  , fileIds = Nothing
+  , poll = Nothing }
+
+formatContents :: HashtagMap -> Post -> Mfm
+formatContents tagmap post = strip $ (big . bold $ post.title) <> "\n"
+  <> post.content <> " " <> hashtags <> " " <> urlLink post.link Nothing
+  where hashtags = Data.Text.unwords $ mapMaybe (tagmap M.!?) normalizedCategories
+        normalizedCategories = toCaseFold <$> post.categories
 

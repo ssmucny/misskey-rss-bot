@@ -6,13 +6,12 @@ getFeed
 import           Data.Text                 (unpack)
 import           Data.Time                 (defaultTimeLocale, parseTimeOrError,
                                             rfc822DateFormat)
+import           Import
 import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status (Status, mkStatus)
-import           RIO
 import           Text.Feed.Import          (parseFeedSource)
 import           Text.Feed.Types
 import           Text.RSS.Syntax
-import           Types
 import           Util
 
 feedType :: IsString a => Feed -> a
@@ -22,8 +21,8 @@ feedType (RSS1Feed _) = "RSS1Feed"
 feedType (XMLFeed _)  = "XMLFeed"
 
 getFeed :: (MonadThrow m, MonadIO m) => Url -> m (Either Status [Post])
-getFeed (Url url) = do
-    response <- httpLBS =<< parseRequest (unpack url)
+getFeed (Url feedUrl) = do
+    response <- httpLBS =<< parseRequest (unpack feedUrl)
     return $ case getResponseStatusCode response of
             200   -> case parseFeedSource $ getResponseBody response of
                 Nothing   -> Left $ mkStatus 0 "Unable to parse feed"
@@ -32,11 +31,11 @@ getFeed (Url url) = do
 
 
 normalizeFeed :: Feed -> [Post]
-normalizeFeed (AtomFeed feed) = undefined
+normalizeFeed (AtomFeed _) = error "AtomFeed not implemented"
 normalizeFeed (RSSFeed feed) =
     let items = rssItems . rssChannel $ feed in rss2ItemtoPost <$> items
-normalizeFeed (RSS1Feed feed) = undefined
-normalizeFeed (XMLFeed feed) = undefined
+normalizeFeed (RSS1Feed _) = error "RSS1Feed not implemented"
+normalizeFeed (XMLFeed _) = error "XML feed not implemented"
 
 rss2ItemtoPost :: RSSItem -> Post
 rss2ItemtoPost item = Post

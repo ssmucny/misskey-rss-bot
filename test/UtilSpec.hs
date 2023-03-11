@@ -3,7 +3,6 @@ module UtilSpec (spec) where
 
 import           Import
 import           Test.Hspec
-import           Test.Hspec.QuickCheck
 import           Util
 
 spec :: Spec

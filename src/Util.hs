@@ -10,7 +10,7 @@ module Util
 import           Data.ByteString as BS (unpack)
 import qualified Data.Foldable
 import           Data.Time       (UTCTime, defaultTimeLocale, parseTimeOrError)
-import           RIO
+import           Import
 
 plus2 :: Int -> Int
 plus2 = (+ 2)
