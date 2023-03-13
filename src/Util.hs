@@ -1,8 +1,5 @@
--- | Silly utility module, used to demonstrate how to write a test
--- case.
 module Util
-  ( plus2
-  , displayBS
+  ( displayBS
   , fallbackTime
   , delaySeconds
   ) where
@@ -11,10 +8,6 @@ import           Data.ByteString as BS (unpack)
 import qualified Data.Foldable
 import           Data.Time       (UTCTime, defaultTimeLocale, parseTimeOrError)
 import           Import
-
-plus2 :: Int -> Int
-plus2 = (+ 2)
-
 
 displayBS :: ByteString -> Utf8Builder
 displayBS = Data.Foldable.fold . fmap display . unpack

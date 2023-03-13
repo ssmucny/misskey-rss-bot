@@ -48,7 +48,7 @@ module Misskey.Mfm
 import RIO
     ( IsString, Semigroup(..), Maybe(..), Text, (<$>), maybe )
 import Misskey.Types ( Url(..), User(username, host) )
-import Data.Text ( replace )
+import Data.Text ( replace, null )
 
 -- |Alias for `Text` as convenience type
 type Mfm = Text
@@ -78,13 +78,14 @@ mention user = "@" <> user.username <> maybe "" ("@" <>) hostName
 
 -- |Remove whitespaces and add '#' at start. No capitalization or checking for invalid characters
 hashtag :: Text -> Mfm
-hashtag t = "#" <> replace " " "" t
+hashtag t = if null trimmedTag then "" else "#" <> trimmedTag
+    where trimmedTag = replace " " "" t
 
 -- |A link to an web resource. Optional text to be displayed in place of the raw url. Url is not checked for correctnes.
 --  like [display text](https://misskey.io/)
 urlLink :: Url -> Maybe Text -> Mfm
 urlLink linkVal (Just displayTxt) = "[" <> displayTxt <> "]" <> linkTxt linkVal.toText
-urlLink linkVal Nothing = linkTxt linkVal.toText
+urlLink linkVal Nothing = linkVal.toText
 
 linkTxt :: (Semigroup a, IsString a) => a -> a
 linkTxt l = "(" <> l <> ")"
