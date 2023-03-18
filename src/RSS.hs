@@ -44,3 +44,4 @@ rss2ItemtoPost item = Post
     , createdDate = maybe fallbackTime (parseTimeOrError True defaultTimeLocale rfc822DateFormat . unpack) item.rssItemPubDate
     , categories = rssCategoryValue <$> rssItemCategories item
     , content = "" `fromMaybe` rssItemContent item }
+    --, content = "" `fromMaybe` rssItemDescription item `fromMaybe` rssItemContent item }

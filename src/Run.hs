@@ -29,7 +29,7 @@ tagMap tagPairs = M.fromListWith (<>) $ addHash <$> tagPairs
 type HashtagMap = M.Map Text Text
 
 addHash :: TagPair -> (Text, Text)
-addHash tagPair = (tagPair.category, " #" <> toCaseFold tagPair.tag)
+addHash tagPair = (toCaseFold tagPair.category, "#" <> tagPair.tag)
 
 updatePosts :: HashtagMap -> [Note] -> FeedConfig -> RIO App ()
 updatePosts tagsMap prevPosts feedConfig = do
