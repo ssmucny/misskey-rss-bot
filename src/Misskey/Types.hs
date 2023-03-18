@@ -1,4 +1,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE GeneralisedNewtypeDeriving #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DeriveGeneric  #-}
 module Misskey.Types (
       MkError(..)
@@ -30,8 +32,7 @@ import Data.Aeson
       Value(String),
       ToJSON(toJSON) )
 import           Data.Time.Clock      (UTCTime)
-import Data.ByteString.Lazy (unpack)
-import qualified Data.Foldable
+import Data.ByteString.Lazy (toStrict)
 
 data NewNote = NewNote
  { text :: Text
@@ -49,15 +50,15 @@ data NewNote = NewNote
  , poll :: Maybe Poll
  } deriving (Show, Generic, FromJSON, ToJSON)
 
-newtype Url = Url { toText :: Text } deriving (Show, Generic, FromJSON, ToJSON)
-newtype ChannelId = ChannelId { toText :: Text } deriving (Show, Generic, ToJSON, FromJSON)
-newtype MkToken = MkToken { toText :: Text } deriving (Show, Generic, FromJSON, ToJSON)
-newtype NoteId = NoteId { toText :: Text } deriving (Show, Generic, FromJSON, ToJSON)
-newtype UserId = UserId { toText :: Text } deriving (Show, Generic, FromJSON, ToJSON)
-newtype FileId = FileId { toText :: Text } deriving (Show, Generic, FromJSON, ToJSON)
-newtype Md5Sum = Md5Sum { toText :: Text } deriving (Show, Generic, FromJSON, ToJSON)
-newtype ByteSize = ByteSize { toInteger :: Integer } deriving (Show, Generic, FromJSON, ToJSON)
-newtype FolderId = FolderId { toText :: Text } deriving (Show, Generic, FromJSON, ToJSON)
+newtype Url = Url { toText :: Text } deriving (Generic) deriving newtype (Show, ToJSON, FromJSON)
+newtype ChannelId = ChannelId { toText :: Text } deriving (Generic) deriving newtype (Show, ToJSON, FromJSON)
+newtype MkToken = MkToken { toText :: Text } deriving (Generic) deriving newtype (Show, ToJSON, FromJSON)
+newtype NoteId = NoteId { toText :: Text } deriving (Generic) deriving newtype (Show, ToJSON, FromJSON)
+newtype UserId = UserId { toText :: Text } deriving (Generic) deriving newtype (Show, ToJSON, FromJSON)
+newtype FileId = FileId { toText :: Text } deriving (Generic) deriving newtype (Show, ToJSON, FromJSON)
+newtype Md5Sum = Md5Sum { toText :: Text } deriving (Generic) deriving newtype (Show, ToJSON, FromJSON)
+newtype ByteSize = ByteSize { toInteger :: Integer } deriving (Generic) deriving newtype (Show, ToJSON, FromJSON)
+newtype FolderId = FolderId { toText :: Text } deriving (Generic) deriving newtype (Show, ToJSON, FromJSON)
 
 data NoteVisibility = Public | Home | Followers | Specified deriving (Show, Generic)
 instance FromJSON NoteVisibility where
@@ -91,7 +92,7 @@ emptyError :: MkError
 emptyError = MkError "" "" ""
 
 instance Display MkError where
-  display = Data.Foldable.fold . fmap display . unpack . encode
+  display = displayBytesUtf8 . toStrict . encode
 
 data NotePredicate =
       Limit Integer -- ^Limit `elem` [1..100]
@@ -148,14 +149,14 @@ data File = File
 
 data User = User
   { id       :: UserId
-  , name     :: Text
+  , name     :: Maybe Text
   , username :: Text
   , host     :: Maybe Url
   } deriving (Show, Generic, FromJSON, ToJSON)
 
 data UserDetails = UserDetails
   { id            :: UserId
-  , name          :: Text
+  , name          :: Maybe Text
   , username      :: Text
   , host          :: Maybe Url
   , notesCount    :: Int

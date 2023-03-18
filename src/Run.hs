@@ -69,16 +69,13 @@ filterPosts lastDate' feed' = do
 
 logLeft :: (MonadIO m, MonadReader env m, HasLogFunc env, Display a) =>
  Either a b -> m ()
-logLeft result = case result of
-  Left e  -> logError $ display e
-  Right _ -> pure ()
-
+logLeft (Left e) = logError $ display e
+logLeft _        = pure ()
 
 logLeftWith :: (MonadIO m, MonadReader env m, HasLogFunc env, Display a) =>
   (t -> a) -> Either t b -> m ()
-logLeftWith format result = case result of
-  Left e  -> logError $ display $ format e
-  Right _ -> pure ()
+logLeftWith format (Left e) = logError . display . format $ e
+logLeftWith _ _             = pure ()
 
 calcLocalLastDate :: [Note] -> Maybe UTCTime -> Maybe UTCTime
 calcLocalLastDate previousPosts manualDate =

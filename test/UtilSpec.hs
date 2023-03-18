@@ -1,10 +1,10 @@
 module UtilSpec (spec) where
 
+import           Data.Time                      (UTCTime (utctDay))
+import           Data.Time.Calendar.OrdinalDate (toOrdinalDate)
 import           Import
 import           Test.Hspec
 import           Util
-import Data.Time ( UTCTime(utctDay) )
-import Data.Time.Calendar.OrdinalDate ( toOrdinalDate )
 
 spec :: Spec
 spec = do

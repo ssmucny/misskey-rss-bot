@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
 module Misskey.Api (
     getNotes
     , getMe
@@ -14,8 +16,17 @@ import           Data.Time           (UTCTime)
 import           Network.HTTP.Simple
 
 import Misskey.Types
+import System.IO (print)
+import Data.Aeson.KeyMap (fromList)
+import RIO.Vector (create)
 
+ok :: Response a -> Bool
+ok response = getResponseStatusCode response == 200
 
+mkResponse :: Response (Either JSONException b) -> Either MkError b
+mkResponse response = if ok response
+    then mapLeft mkJSONError $ getResponseBody response
+    else Left $ MkError "HTTP_ERROR" (pack . show $ getResponseStatus response) (pack . show $ getResponseStatusCode response)
 
 defaultMkRequest :: Request
 defaultMkRequest
@@ -31,7 +42,7 @@ getNotes (Url hostname) token flags = do
             $ setRequestHost (encodeUtf8 hostname) -- ^misskey.io
             $ setRequestBodyJSON (object $ userAuthToken token <> map predicateTerm flags)
             $ defaultMkRequest
-    mkResponseEither <$> httpJSON request
+    mkResponse <$> httpJSONEither request
 
 predicateTerm :: IsString a => NotePredicate -> (a, Value)
 predicateTerm (Limit n)          = ("limit", Number (scientific n 0))
@@ -48,14 +59,8 @@ userAuthToken :: Maybe MkToken -> [(Key, Value)]
 userAuthToken Nothing            = []
 userAuthToken (Just (MkToken t)) = [("i", String t)]
 
-mkResponseEither :: (FromJSON b) => Response Value -> Either MkError b
-mkResponseEither response = case getResponseStatusCode response of
-        200 -> case fromJSON (getResponseBody response) of
-            Error e   -> Left $ MkError "AESON_PARSE_ERROR" (pack e) ""
-            Success b -> Right b
-        _   -> case fromJSON (getResponseBody response) of
-            Error e   -> Left $ MkError "AESON_PARSE_ERROR" (pack e) ""
-            Success b -> Left b
+mkJSONError :: JSONException -> MkError
+mkJSONError jsonException = MkError "JSON_EXCEPTION" (pack . show $ jsonException) ""
 
 getMe :: (MonadIO m) =>
     Url -> Maybe MkToken -> m (Either MkError UserDetails)
@@ -65,8 +70,7 @@ getMe (Url hostname) token = do
             $ setRequestHost (encodeUtf8 hostname) -- ^misskey.io
             $ setRequestBodyJSON (object $ userAuthToken token)
             $ defaultMkRequest
-    mkResponseEither <$> httpJSON request
-
+    mkResponse <$> httpJSONEither request
 
 
 getLatestPostDate :: MonadIO m =>
@@ -76,11 +80,13 @@ getLatestPostDate hostname token = do
     notes <- case me of
         Left e  -> pure $ Left e
         Right i -> getUserNotes hostname token i.id [Limit 1]
-    return $ noteCreatedAt <$> (headEither =<< notes)
-    where headEither []    = Left $ MkError "NO_NOTES_FOR_USER" "" ""
-          headEither (n:_) = Right n
+    return $ noteCreatedAt <$> (headEither me =<< notes)
+    where headEither user [] = Left $ MkError "NO_NOTES_FOR_USER" ("username=" <> getUsername user) ""
+          headEither _ (n:_) = Right n
           noteCreatedAt :: Note -> UTCTime
           noteCreatedAt note = note.createdAt
+          getUsername :: Either a UserDetails -> Text
+          getUsername = either (const "") (\u -> u.username)
 
 
 getUserNotes :: (MonadIO m) => Url -> Maybe MkToken -> UserId -> [NotePredicate] -> m (Either MkError [Note])
@@ -90,7 +96,7 @@ getUserNotes (Url hostname) token (UserId uid) flags = do
             $ setRequestHost (encodeUtf8 hostname) -- ^misskey.io
             $ setRequestBodyJSON (object $ userAuthToken token <> [("userId", String uid)] <> map predicateTerm flags)
             $ defaultMkRequest
-    mkResponseEither <$> httpJSON request
+    mkResponse <$> httpJSONEither request
 
 
 
@@ -99,7 +105,20 @@ postNote (Url hostname) token note = do
     let request
             = setRequestPath "/api/notes/create"
             $ setRequestHost (encodeUtf8 hostname) -- ^misskey.io
-            $ setRequestBodyJSON (toJSONList [toJSON note, object (userAuthToken token)])
+            $ setRequestBodyJSON (toJSON note `mergeObjects` object (userAuthToken token))
             $ defaultMkRequest
-    mkResponseEither <$> httpJSON request
+    noteResponse <- mkResponse <$> httpJSONEither request
+    return $ mapRight createdNote noteResponse
+    
+data PostNoteCreated = PostNoteCreated
+ {createdNote :: Note } deriving (Show, Generic, ToJSON, FromJSON)
 
+mergeObjects :: Value -> Value -> Object
+mergeObjects (Object o1) (Object o2) = o1 <> o2
+mergeObjects (Object o1) _ = o1
+mergeObjects _ (Object o2) = o2
+mergeObjects _ _ = fromList []
+
+mapRight :: (t -> b) -> Either a t -> Either a b
+mapRight function (Right value) = Right $ function value
+mapRight _ (Left value) = Left value

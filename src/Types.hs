@@ -57,8 +57,8 @@ data FeedConfig =
 data MisskeyParams =
     MisskeyParams {
       visibility :: NoteVisibility
-    , localOnly    :: Bool
-    , channel      :: Maybe ChannelId
+    , localOnly  :: Bool
+    , channel    :: Maybe ChannelId
     } deriving (Show, Generic, FromJSON, ToJSON)
 
 data PostParams =
@@ -81,3 +81,5 @@ data Post = Post
   , categories  :: [Text]
   , createdDate :: UTCTime
   } deriving (Show, Generic)
+
+
